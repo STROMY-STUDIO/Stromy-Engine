@@ -1,0 +1,2720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stromy Engine v4.8 – Quantum Animation</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+        body {
+            background-color: #1e1e1e;
+            color: #cccccc;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+        .title-bar {
+            background: #252526;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            border-bottom: 1px solid #111;
+            font-size: 12px;
+            color: #999;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .win-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .win-close {
+            background: #ff5f56;
+        }
+        .win-min {
+            background: #ffbd2e;
+        }
+        .win-max {
+            background: #27c93f;
+        }
+        .vertical-toolbar {
+            display: flex;
+            flex-direction: column;
+            background: #333333;
+            width: 80px;
+            min-width: 80px;
+            align-items: center;
+            padding: 10px 0;
+            gap: 8px;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+            z-index: 90;
+            overflow-y: auto;
+            overflow-x: hidden;
+            max-height: 100%;
+            flex-shrink: 0;
+        }
+        .vert-btn {
+            background: transparent;
+            color: #ccc;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            border-radius: 4px;
+            width: 60px;
+            text-align: center;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        .vert-btn:hover {
+            background: #444;
+            color: #fff;
+        }
+        .vert-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+        .action-dropdown {
+            position: relative;
+            width: 100%;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .action-btn {
+            background: transparent;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 6px 0;
+            cursor: pointer;
+            font-size: 11px;
+            border-radius: 4px;
+            width: 60px;
+            margin: 0 auto;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        .action-btn:hover {
+            background: #444;
+            color: #fff;
+        }
+        .dropdown-content {
+            display: none;
+            position: fixed;
+            background: #252526;
+            border: 1px solid #555;
+            border-radius: 6px;
+            min-width: 180px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+        .dropdown-content a {
+            color: #ccc;
+            padding: 8px 16px;
+            text-decoration: none;
+            display: block;
+            font-size: 12px;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+        .dropdown-content a:hover {
+            background: #007acc;
+            color: white;
+        }
+        .select-ui {
+            background: #252526;
+            color: #00ffcc;
+            border: 1px solid #555;
+            padding: 4px 8px;
+            font-size: 11px;
+            border-radius: 3px;
+            outline: none;
+            width: 70px;
+            margin: 0 auto;
+            flex-shrink: 0;
+        }
+        .select-ui:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .vert-separator {
+            width: 50px;
+            height: 1px;
+            background: #555;
+            margin: 2px 0;
+            flex-shrink: 0;
+        }
+        .libs-select {
+            background: #252526;
+            color: #00ffcc;
+            border: 1px solid #555;
+            padding: 4px;
+            font-size: 10px;
+            border-radius: 3px;
+            outline: none;
+            width: 70px;
+            flex-shrink: 0;
+        }
+        .libs-select:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .lib-input-row {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            width: 100%;
+            flex-shrink: 0;
+        }
+        .lib-input-row input[type="text"] {
+            width: 68px;
+            background: #1e1e1e;
+            color: #ccc;
+            border: 1px solid #555;
+            padding: 4px;
+            font-size: 10px;
+            border-radius: 3px;
+            outline: none;
+            text-align: center;
+        }
+        .lib-input-row input[type="text"]:focus {
+            border-color: #00ffcc;
+        }
+        .lib-input-row input[type="text"]:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .lib-input-row button {
+            background: #007acc;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 10px;
+            width: 68px;
+        }
+        .lib-input-row button:hover {
+            background: #0098ff;
+        }
+        .lib-input-row button:disabled {
+            background: #444;
+            color: #888;
+            cursor: not-allowed;
+        }
+        .workspace-grid {
+            display: flex;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 180px;
+            background: #252526;
+            border-right: 1px solid #111;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+        .sidebar-header {
+            padding: 10px;
+            font-size: 11px;
+            color: #aaa;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .file-item {
+            padding: 5px 15px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #ccc;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .file-item:hover {
+            background: #2a2d2e;
+        }
+        .file-item.active {
+            background: #37373d;
+            color: #fff;
+            border-left: 2px solid #007acc;
+        }
+        .editor-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+            min-width: 0;
+            min-height: 0;
+            position: relative;
+        }
+        .editor-tabs {
+            background: #252526;
+            display: flex;
+            height: 35px;
+            flex-shrink: 0;
+        }
+        .tab {
+            padding: 0 15px;
+            line-height: 35px;
+            background: #1e1e1e;
+            color: #00ffcc;
+            font-size: 12px;
+            border-right: 1px solid #333;
+            border-top: 2px solid #00ffcc;
+        }
+        .code-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .code-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 15px;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-y: auto;
+            max-height: 100%;
+        }
+        #teratex-editor {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border: none;
+            outline: none;
+            resize: none;
+            z-index: 2;
+            width: 100%;
+            height: 100%;
+        }
+        #prism-viewer {
+            background: #1e1e24;
+            color: #569cd6;
+            z-index: 1;
+            opacity: 0;
+            pointer-events: none;
+            white-space: pre-wrap;
+            width: 100%;
+            height: 100%;
+        }
+        .find-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: #252526;
+            padding: 8px;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #555;
+            z-index: 10;
+            font-size: 13px;
+        }
+        .find-bar.active {
+            display: flex;
+        }
+        .find-bar input[type="text"] {
+            background: #1e1e1e;
+            border: 1px solid #555;
+            color: #ccc;
+            padding: 4px 8px;
+            border-radius: 3px;
+            width: 200px;
+            font-size: 13px;
+            outline: none;
+        }
+        .find-bar .find-count {
+            color: #aaa;
+            min-width: 50px;
+        }
+        .find-btn {
+            background: #333;
+            border: none;
+            color: #ccc;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 3px;
+            font-size: 13px;
+        }
+        .find-btn:hover {
+            background: #444;
+        }
+        .output-panel {
+            width: 450px;
+            background: #1e1e1e;
+            border-left: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            min-height: 0;
+        }
+        .output-tabs {
+            display: flex;
+            background: #252526;
+            height: 35px;
+            flex-shrink: 0;
+        }
+        .out-tab {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 12px;
+            border-right: 1px solid #333;
+        }
+        .out-tab.active {
+            background: #1e1e1e;
+            color: #fff;
+            border-top: 2px solid #007acc;
+        }
+        .output-viewport {
+            flex: 1;
+            position: relative;
+            background: #000;
+            overflow: hidden;
+            min-height: 0;
+        }
+        .view-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            overflow-y: auto;
+        }
+        .view-layer.active {
+            display: block;
+        }
+        #server-terminal {
+            padding: 10px;
+            font-size: 12px;
+            color: #cccccc;
+            overflow-y: auto;
+            height: 100%;
+        }
+        .log-row {
+            margin-bottom: 5px;
+        }
+        .log-time {
+            color: #858585;
+        }
+        .log-sys {
+            color: #569cd6;
+        }
+        .log-success {
+            color: #4af626;
+        }
+        .log-warn {
+            color: #ce9178;
+        }
+        .log-info {
+            color: #9cdcfe;
+        }
+        .log-error {
+            color: #f14c4c;
+        }
+        .log-progress {
+            color: #00ffcc;
+            font-weight: bold;
+        }
+        #html-render-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #fff;
+        }
+        .placeholder-msg {
+            padding: 20px;
+            color: #aaa;
+            text-align: center;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+        }
+        /* ========== ENHANCED GRAPHICS TAB ========== */
+        #graphics-viewport {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background: #111;
+        }
+        #graphics-viewport.view-layer:not(.active) {
+            display: none !important;
+        }
+        #graphics-viewport .graphics-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 8px;
+            background: #252526;
+            flex-shrink: 0;
+            border-bottom: 1px solid #444;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        #graphics-viewport .graphics-header button {
+            background: #333;
+            border: 1px solid #555;
+            color: #ccc;
+            cursor: pointer;
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 3px;
+            white-space: nowrap;
+        }
+        #graphics-viewport .graphics-header button:hover {
+            background: #444;
+        }
+        #graphics-viewport .graphics-header button.anim-active {
+            background: #007acc;
+            border-color: #0098ff;
+            color: #fff;
+        }
+        #graphics-viewport .graphics-header .anim-speed-label {
+            color: #aaa;
+            font-size: 10px;
+            margin: 0 2px;
+        }
+        #graphics-viewport .graphics-header input[type="range"] {
+            width: 50px;
+            accent-color: #00ffcc;
+            cursor: pointer;
+        }
+        #graphics-content {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 4px;
+            padding: 6px;
+            background: #0a0a0a;
+        }
+        #graphics-content .gfx-card {
+            position: relative;
+            border: 1px solid #222;
+            background: #000;
+            display: inline-block;
+            max-width: 100%;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        #graphics-content .gfx-card.anim-playing {
+            border-color: #00ffcc;
+            box-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+        }
+        #graphics-content img {
+            max-width: 100%;
+            max-height: 240px;
+            object-fit: contain;
+            display: block;
+            background: #000;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        #graphics-content img:hover {
+            transform: scale(1.02);
+        }
+        #graphics-content .gfx-card .anim-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.75);
+            color: #00ffcc;
+            font-size: 9px;
+            padding: 3px 6px;
+            text-align: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        #graphics-content .gfx-card:hover .anim-overlay {
+            opacity: 1;
+        }
+        .gfx-placeholder {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 12px;
+        }
+        /* ========== CANVAS LAYER FOR WEBGL / CUSTOM RENDERS ========== */
+        #graphics-canvas-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+            display: none;
+        }
+        #graphics-canvas-layer.active {
+            display: block;
+            pointer-events: auto;
+        }
+        #graphics-canvas-layer canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        /* ===================================== */
+        .status-bar {
+            height: 25px;
+            background: #007acc;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: 11px;
+            z-index: 100;
+            flex-shrink: 0;
+            gap: 8px;
+        }
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4af626;
+            flex-shrink: 0;
+        }
+        .status-indicator.loading {
+            background: #ffbd2e;
+            animation: pulse-dot 0.8s ease-in-out infinite;
+        }
+        .status-indicator.error-state {
+            background: #f14c4c;
+        }
+        @keyframes pulse-dot {
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 189, 46, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(255, 189, 46, 0);
+            }
+        }
+        .secondary-run-btn {
+            background: #00cc66;
+            color: #000;
+            border: none;
+            padding: 2px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 11px;
+            margin-left: 10px;
+            flex-shrink: 0;
+        }
+        .secondary-run-btn:hover {
+            background: #00dd77;
+        }
+        .secondary-run-btn:disabled {
+            background: #555;
+            color: #999;
+            cursor: not-allowed;
+        }
+        .loader {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 5px;
+            vertical-align: middle;
+            flex-shrink: 0;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal {
+            background: #252526;
+            border: 1px solid #555;
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 400px;
+            text-align: left;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            color: #ccc;
+        }
+        .modal h3 {
+            color: #00ffcc;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        .modal p {
+            color: #aaa;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        .modal .btn-row {
+            display: flex;
+            gap: 8px;
+            justify-content: flex-end;
+        }
+        .modal input[type="text"] {
+            width: 100%;
+            background: #1e1e1e;
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 13px;
+            margin-bottom: 16px;
+            outline: none;
+            font-family: Consolas, monospace;
+        }
+        .modal input[type="text"]:focus {
+            border-color: #00ffcc;
+        }
+        .modal button {
+            background: #333;
+            color: #ccc;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+        .modal button:hover {
+            background: #444;
+        }
+        .modal button.success {
+            background: #007acc;
+            color: white;
+            border: none;
+        }
+        .modal button.success:hover {
+            background: #0098ff;
+        }
+        .modal button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .progress-bar-container {
+            width: 68px;
+            height: 6px;
+            background: #1a1a1a;
+            border-radius: 3px;
+            overflow: hidden;
+            flex-shrink: 0;
+            border: 1px solid #444;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .progress-bar-container.visible {
+            opacity: 1;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ffcc, #00cc99);
+            width: 0%;
+            transition: width 0.4s ease;
+            border-radius: 2px;
+            position: relative;
+        }
+        .progress-fill.indeterminate {
+            width: 35% !important;
+            animation: progress-slide 1.4s ease-in-out infinite;
+        }
+        @keyframes progress-slide {
+            0% {
+                transform: translateX(-100%);
+            }
+            50% {
+                transform: translateX(180%);
+            }
+            100% {
+                transform: translateX(-100%);
+            }
+        }
+        .progress-label {
+            font-size: 9px;
+            color: #00ffcc;
+            text-align: center;
+            width: 68px;
+            flex-shrink: 0;
+            min-height: 12px;
+            line-height: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="title-bar">
+        <div class="window-controls">
+            <div class="win-btn win-close"></div>
+            <div class="win-btn win-min"></div>
+            <div class="win-btn win-max"></div>
+        </div>
+        <div>Stromy Engine Workspace – Quantum Animation Hub</div>
+        <div>v4.8 – Enhanced</div>
+    </div>
+    <div class="workspace-grid">
+        <!-- ========== VERTICAL TOOLBAR ========== -->
+        <div class="vertical-toolbar">
+            <button class="vert-btn" id="btnRun" onclick="executeRuntimeEngine()" title="Run (Ctrl+Enter)">▶ Run</button>
+            <button class="vert-btn" id="btnSave" onclick="exportCodeToFile()" title="Save to file">💾 Save</button>
+            <div class="action-dropdown">
+                <button class="action-btn" id="actionMenuBtn">⚡ Actions</button>
+                <div class="dropdown-content" id="actionDropdown">
+                    <a onclick="openFileDialog()">📂 Open</a>
+                    <a onclick="exportCodeToFile()">💾 Save</a>
+                    <a onclick="newFile()">📄 New</a>
+                    <a onclick="clearEditor()">🗑 Clear</a>
+                    <a onclick="selectAllText()">📋 Select All</a>
+                    <a onclick="copyText()">📋 Copy</a>
+                    <a onclick="pasteText()">📄 Paste</a>
+                    <a onclick="undoAction()">↩ Undo</a>
+                    <a onclick="redoAction()">↪ Redo</a>
+                    <a onclick="toggleFind()">🔍 Find</a>
+                    <a onclick="clearTerminal()">🧹 Clear Terminal</a>
+                </div>
+            </div>
+            <button class="vert-btn" id="btnCopyScript" onclick="copyFullScript()" title="Copy full script">📋 Copy</button>
+            <button class="vert-btn" id="btnExit" onclick="exitApp()" title="Exit">🚪 Exit</button>
+            <div class="vert-separator"></div>
+            <select id="engine-switch" class="select-ui" onchange="runLayerTransition()">
+                <option value="teratex">Teratex</option>
+                <option value="prism">Prism</option>
+            </select>
+            <div class="vert-separator"></div>
+            <select class="libs-select" id="libsSelect" onchange="handleLibSelect()">
+                <option value="">🧪 Libs</option>
+                <option value="common">Common</option>
+                <option value="moderate">Moderate</option>
+                <option value="advanced">Advanced</option>
+                <option value="science">Science</option>
+                <option value="web">Web</option>
+                <option value="data">Data</option>
+                <option value="all">All</option>
+            </select>
+            <div class="lib-input-row">
+                <input type="text" id="persistentLibInput" placeholder="e.g. numpy, pandas">
+                <button id="btnLoadPersistent" onclick="loadPersistentLibs()">Load</button>
+            </div>
+            <div class="vert-separator"></div>
+            <button class="vert-btn" id="btnHeavy" onclick="openCustomPackageModal()" title="Load custom packages">📦 Heavy</button>
+            <div class="progress-bar-container" id="libProgressBarContainer">
+                <div class="progress-fill" id="libProgressFill"></div>
+            </div>
+            <div class="progress-label" id="progressLabel"></div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-header">Explorer</div>
+            <div id="file-py" class="file-item active" onclick="switchFileMode('python')">
+                <span style="color:#3776ab;">🐍</span> script_engine.py
+            </div>
+            <div id="file-html" class="file-item" onclick="switchFileMode('html')">
+                <span style="color:#e34f26;">🌐</span> index_render.html
+            </div>
+        </div>
+        <div class="editor-container">
+            <div class="editor-tabs">
+                <div class="tab" id="active-tab-name">script_engine.py</div>
+            </div>
+            <div class="code-area">
+                <textarea id="teratex-editor" class="code-layer" spellcheck="false"></textarea>
+                <div id="prism-viewer" class="code-layer"><pre><code id="prism-token-pipe"></code></pre></div>
+            </div>
+        </div>
+        <div class="output-panel">
+            <div class="output-tabs">
+                <button id="tab-log" class="out-tab active" onclick="switchOutputTab('logs')">TERMINAL</button>
+                <button id="tab-render" class="out-tab" onclick="switchOutputTab('render')">LIVE RENDER</button>
+                <button id="tab-graphics" class="out-tab" onclick="switchOutputTab('graphics')">GRAPHICS</button>
+            </div>
+            <div class="output-viewport">
+                <div id="log-viewport" class="view-layer active">
+                    <div id="server-terminal"></div>
+                </div>
+                <div id="render-viewport" class="view-layer">
+                    <iframe id="html-render-frame"></iframe>
+                    <div id="python-render-placeholder" class="placeholder-msg" style="display:none;">
+                        Live preview is only for HTML mode.<br>Switch to the HTML file.
+                    </div>
+                </div>
+                <!-- ENHANCED GRAPHICS TAB -->
+                <div id="graphics-viewport" class="view-layer">
+                    <div class="graphics-header">
+                        <span style="color:#aaa;font-size:11px;">Captured Output</span>
+                        <button onclick="clearGraphics()" title="Clear all graphics">🗑 Clear</button>
+                        <button id="btnAnimPlay" onclick="toggleGlobalAnimation()" title="Play/Pause all animations">⏯ Play All</button>
+                        <span class="anim-speed-label">Speed:</span>
+                        <input type="range" id="animSpeedSlider" min="1" max="30" value="10" oninput="updateAnimSpeed()" title="Animation FPS">
+                        <span id="animFpsLabel" style="color:#00ffcc;font-size:10px;">10 fps</span>
+                        <button id="btnCanvasToggle" onclick="toggleCanvasLayer()" title="Toggle WebGL/Canvas overlay">🎨 Canvas</button>
+                    </div>
+                    <div id="graphics-content">
+                        <div class="gfx-placeholder">No graphics captured yet.</div>
+                    </div>
+                    <div id="graphics-canvas-layer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="status-bar">
+        <div class="status-left">
+            <span class="status-indicator" id="statusDot"></span>
+            <span id="status-text">Core Active</span>
+        </div>
+        <div id="status-mode">Python 3.12 (Offline)</div>
+        <button class="secondary-run-btn" id="btnRunSecondary" onclick="executeRuntimeEngine()">▶ Run</button>
+    </div>
+    <div class="modal-overlay" id="customPackageModal">
+        <div class="modal">
+            <h3>📦 Load Custom Python Packages</h3>
+            <p>Enter comma-separated package names (built-in or PyPI pure-Python)</p>
+            <input type="text" id="customPackageInput" placeholder="numpy, pandas, requests">
+            <div class="btn-row">
+                <button class="success" id="btnLoadCustom">Load</button>
+                <button onclick="document.getElementById('customPackageModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.0/full/pyodide.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js">
+    </script>
+
+    <script>
+        // ==================== UTILS ====================
+        function py(code) {
+            const lines = code.split('\n');
+            while (lines.length && lines[0].trim() === '') lines.shift();
+            while (lines.length && lines[lines.length - 1].trim() === '') lines.pop();
+            if (lines.length === 0) return '';
+            const minIndent = lines.reduce((min, line) => {
+                if (line.trim() === '') return min;
+                const m = line.match(/^(\s*)/);
+                return Math.min(min, m[1].length);
+            }, Infinity);
+            if (minIndent === Infinity || minIndent === 0) return lines.join('\n');
+            return lines.map(line => {
+                if (line.trim() === '') return '';
+                return line.slice(minIndent);
+            }).join('\n');
+        }
+
+        // ==================== STATE ====================
+        let pyodide = null,
+            pyodideReady = false,
+            pyodideLoading = false;
+        let loadingInProgress = false;
+        let loadedPackages = new Set();
+        let failedPackages = new Set();
+        let loadQueueSerial = 0;
+
+        let fileContents = { python: '', html: '' };
+        let undoStacks = { python: [], html: [] };
+        let redoStacks = { python: [], html: [] };
+        let saveStateTimeout, htmlRenderTimeout;
+        let lastInputTime = 0;
+
+        // Animation state
+        let globalAnimPlaying = false;
+        let globalAnimFps = 10;
+        let animIntervals = [];
+        let capturedGifDataUrls = [];
+        let canvasLayerActive = false;
+
+        // ==================== PACKAGE DEFINITIONS ====================
+        const BUILTIN_COMMON = [
+            "numpy", "pandas", "matplotlib", "scipy", "sympy", "scikit-learn", "scikit-image",
+            "Pillow", "opencv-python", "requests", "urllib3", "beautifulsoup4", "lxml", "html5lib",
+            "click", "tqdm", "joblib", "pyyaml", "pytest", "coverage", "networkx", "nltk",
+            "Jinja2", "MarkupSafe", "Pygments", "pydantic", "pydantic_core", "protobuf", "regex", "rich",
+            "sqlalchemy", "statsmodels", "patsy", "python-dateutil", "pytz", "tzdata", "uncertainties",
+            "toolz", "tomli", "tomli-w", "threadpoolctl", "six", "setuptools", "packaging", "certifi",
+            "idna", "charset-normalizer", "soupsieve", "cssselect", "docutils", "bleach", "fsspec",
+            "cloudpickle", "decorator", "executing", "ipython", "jedi", "parso", "prompt_toolkit",
+            "wcwidth", "traitlets", "matplotlib-inline", "stack_data", "pure_eval", "asttokens",
+            "more-itertools", "zstandard", "msgpack", "orjson", "simplejson", "xxhash", "sortedcontainers",
+            "typing-extensions", "exceptiongroup", "attrs", "jsonschema", "jsonschema_specifications",
+            "referencing", "rpds-py", "pyrsistent", "iniconfig", "pluggy", "atomicwrites", "pyparsing",
+            "cycler", "kiwisolver", "fonttools", "contourpy", "imageio", "lazy_loader", "tskit",
+            "newick", "msprime", "demes", "gsw", "unyt", "cftime", "netcdf4", "h5py", "xarray"
+        ];
+
+        const BUILTIN_MODERATE = [
+            "geopandas", "fiona", "pyproj", "shapely", "bokeh", "astropy", "astropy_iers_data",
+            "biopython", "gensim", "lightgbm", "xgboost", "wordcloud", "yt", "zarr", "igraph",
+            "duckdb", "numcodecs", "pywavelets", "pyerfa", "pyshp", "Cartopy", "cmyt", "colorspacious",
+            "coolprop", "cryptography", "cffi", "pycparser", "bcrypt", "pynacl", "pycryptodome",
+            "bitarray", "bitstring", "brotli", "cachetools", "clarabel", "cvxpy-base", "cysignals",
+            "cytoolz", "distlib", "fastparquet", "freesasa", "future", "galpy", "gmpy2", "logbook",
+            "matplotlib-pyodide", "memory-allocator", "micropip", "mmh3", "mne", "mpmath", "munch",
+            "mypy", "nlopt", "nh3", "optlang", "peewee", "pillow_heif", "pkgconfig", "pplpy",
+            "primecountpy", "py", "pyclipper", "pygame-ce", "pyheif", "pyiceberg", "pyinstrument",
+            "pyodide-http", "pysam", "pytest-asyncio", "pytest-benchmark", "python-flint",
+            "python-magic", "python-sat", "python_solvespace", "pyxirr", "rebound", "reboundx",
+            "retrying", "river", "RobotRaconteur", "ruamel.yaml", "screed", "sisl", "smart_open",
+            "sourmash", "sparseqr", "strictyaml", "svgwrite", "swiglpk", "tblib", "termcolor",
+            "texttable", "tiktoken", "traits", "yarl", "multidict", "frozenlist", "aiosignal",
+            "async-timeout", "b2d", "boost-histogram", "cbor-diag", "cffi_example", "cligj",
+            "cramjam", "crc32c", "ewah_bool_utils", "lakers-python", "lazy-object-proxy", "libcst",
+            "msgspec", "pyxel", "rust-panic-test", "zengl", "autograd"
+        ];
+
+        const BUILTIN_ADVANCED = [
+            "awkward-cpp", "asciitree", "b2d", "boost-histogram", "cbor-diag", "cffi_example",
+            "cligj", "cramjam", "crc32c", "cysignals", "cytoolz", "demes", "deprecation", "distlib",
+            "duckdb", "ewah_bool_utils", "fastparquet", "freesasa", "future", "galpy", "gmpy2",
+            "gsw", "lakers-python", "lazy-object-proxy", "libcst", "lightgbm", "logbook", "mmh3",
+            "mne", "mpmath", "msgspec", "munch", "netcdf4", "newick", "nh3", "nlopt", "numcodecs",
+            "optlang", "peewee", "pillow_heif", "pkgconfig", "pplpy", "primecountpy", "pyclipper",
+            "pygame-ce", "pyheif", "pyiceberg", "pyinstrument", "pynacl", "pyodide-http", "pysam",
+            "python-flint", "python-magic", "python-sat", "python_solvespace", "pyxel", "pyxirr",
+            "rebound", "reboundx", "retrying", "river", "RobotRaconteur", "screed", "sisl", "sourmash",
+            "sparseqr", "strictyaml", "svgwrite", "swiglpk", "tblib", "termcolor", "texttable",
+            "tiktoken", "traits", "zengl", "zarr", "zstandard", "yt", "wordcloud", "xgboost"
+        ];
+
+        const PIP_COMMON = [
+            "colorama", "filelock", "pathspec", "toml", "markdown", "mistune", "chardet",
+            "tzlocal", "arrow", "humanize", "faker", "iso8601", "iso3166", "rfc3986", "rfc3987",
+            "parse", "appdirs", "pycountry", "phonenumbers", "deepdiff", "ordered-set", "boltons",
+            "json5", "hjson", "commentjson", "docopt", "argh", "pathtools"
+        ];
+
+        const PIP_MODERATE = [
+            "lark", "fastjsonschema", "et-xmlfile", "jdcal", "openpyxl", "xlsxwriter", "tabulate",
+            "tenacity", "python-dotenv", "pydantic-settings", "loguru", "watchdog", "elasticsearch",
+            "docker", "yfinance", "pandas-datareader", "celery", "plotly", "dash", "dask",
+            "distributed", "gcsfs", "folium", "httpx", "fastapi", "uvicorn", "starlette",
+            "anyio", "websockets", "greenlet", "blosc", "lz4", "typer", "mkdocs", "types-requests",
+            "types-python-dateutil", "hypothesis", "tox", "pre-commit", "isort", "black", "pylint"
+        ];
+
+        const PIP_ADVANCED = [
+            "pyzmq", "grpcio", "spacy", "sphinx", "seaborn", "numexpr", "boto3", "botocore",
+            "s3transfer", "azure-storage-blob", "google-cloud-storage", "pymongo", "motor",
+            "redis", "aiosqlite", "psycopg2-binary", "mysql-connector-python", "python-docx",
+            "flask", "django", "ujson", "openpyxl", "xlsxwriter", "xlwt", "et-xmlfile", "jdcal"
+        ];
+
+        const ALL_LIBS = [...BUILTIN_COMMON, ...BUILTIN_MODERATE, ...BUILTIN_ADVANCED, ...PIP_COMMON, ...PIP_MODERATE,
+            ...PIP_ADVANCED
+        ];
+        const BUILTIN_SET = new Set([...BUILTIN_COMMON, ...BUILTIN_MODERATE, ...BUILTIN_ADVANCED]);
+        const PIP_SET = new Set([...PIP_COMMON, ...PIP_MODERATE, ...PIP_ADVANCED]);
+
+        const IMPORT_MAP = {
+            'numpy': 'numpy',
+            'pandas': 'pandas',
+            'matplotlib': 'matplotlib',
+            'scipy': 'scipy',
+            'sympy': 'sympy',
+            'sklearn': 'scikit-learn',
+            'scikit-learn': 'scikit-learn',
+            'seaborn': 'seaborn',
+            'statsmodels': 'statsmodels',
+            'plotly': 'plotly',
+            'dash': 'dash',
+            'requests': 'requests',
+            'urllib3': 'urllib3',
+            'aiohttp': 'aiohttp',
+            'flask': 'flask',
+            'django': 'django',
+            'fastapi': 'fastapi',
+            'uvicorn': 'uvicorn',
+            'starlette': 'starlette',
+            'sqlalchemy': 'sqlalchemy',
+            'psycopg2': 'psycopg2-binary',
+            'psycopg2-binary': 'psycopg2-binary',
+            'mysql-connector-python': 'mysql-connector-python',
+            'aiosqlite': 'aiosqlite',
+            'redis': 'redis',
+            'pymongo': 'pymongo',
+            'motor': 'motor',
+            'pillow': 'Pillow',
+            'PIL': 'Pillow',
+            'opencv': 'opencv-python',
+            'cv2': 'opencv-python',
+            'imageio': 'imageio',
+            'beautifulsoup4': 'beautifulsoup4',
+            'bs4': 'beautifulsoup4',
+            'lxml': 'lxml',
+            'html5lib': 'html5lib',
+            'click': 'click',
+            'tqdm': 'tqdm',
+            'joblib': 'joblib',
+            'pyyaml': 'pyyaml',
+            'yaml': 'pyyaml',
+            'pytest': 'pytest',
+            'networkx': 'networkx',
+            'nltk': 'nltk',
+            'spacy': 'spacy',
+            'rich': 'rich',
+            'cryptography': 'cryptography',
+            'jinja2': 'Jinja2',
+            'markupsafe': 'MarkupSafe',
+            'pygments': 'Pygments',
+            'pydantic': 'pydantic',
+            'pydantic_core': 'pydantic_core',
+            'protobuf': 'protobuf',
+            'regex': 'regex',
+            'python-dateutil': 'python-dateutil',
+            'pytz': 'pytz',
+            'tzdata': 'tzdata',
+            'toolz': 'toolz',
+            'tomli': 'tomli',
+            'tomli-w': 'tomli-w',
+            'threadpoolctl': 'threadpoolctl',
+            'six': 'six',
+            'setuptools': 'setuptools',
+            'packaging': 'packaging',
+            'certifi': 'certifi',
+            'idna': 'idna',
+            'charset-normalizer': 'charset-normalizer',
+            'soupsieve': 'soupsieve',
+            'cssselect': 'cssselect',
+            'docutils': 'docutils',
+            'bleach': 'bleach',
+            'fsspec': 'fsspec',
+            'cloudpickle': 'cloudpickle',
+            'decorator': 'decorator',
+            'executing': 'executing',
+            'ipython': 'ipython',
+            'jedi': 'jedi',
+            'parso': 'parso',
+            'prompt_toolkit': 'prompt_toolkit',
+            'wcwidth': 'wcwidth',
+            'traitlets': 'traitlets',
+            'matplotlib-inline': 'matplotlib-inline',
+            'stack_data': 'stack_data',
+            'pure_eval': 'pure_eval',
+            'asttokens': 'asttokens',
+            'more-itertools': 'more-itertools',
+            'zstandard': 'zstandard',
+            'msgpack': 'msgpack',
+            'orjson': 'orjson',
+            'simplejson': 'simplejson',
+            'xxhash': 'xxhash',
+            'sortedcontainers': 'sortedcontainers',
+            'typing-extensions': 'typing-extensions',
+            'exceptiongroup': 'exceptiongroup',
+            'attrs': 'attrs',
+            'jsonschema': 'jsonschema',
+            'jsonschema_specifications': 'jsonschema_specifications',
+            'referencing': 'referencing',
+            'rpds-py': 'rpds-py',
+            'pyrsistent': 'pyrsistent',
+            'iniconfig': 'iniconfig',
+            'pluggy': 'pluggy',
+            'atomicwrites': 'atomicwrites',
+            'pyparsing': 'pyparsing',
+            'cycler': 'cycler',
+            'kiwisolver': 'kiwisolver',
+            'fonttools': 'fonttools',
+            'contourpy': 'contourpy',
+            'lazy_loader': 'lazy_loader',
+            'tskit': 'tskit',
+            'newick': 'newick',
+            'msprime': 'msprime',
+            'demes': 'demes',
+            'gsw': 'gsw',
+            'unyt': 'unyt',
+            'cftime': 'cftime',
+            'netcdf4': 'netcdf4',
+            'h5py': 'h5py',
+            'xarray': 'xarray',
+            'geopandas': 'geopandas',
+            'fiona': 'fiona',
+            'pyproj': 'pyproj',
+            'shapely': 'shapely',
+            'bokeh': 'bokeh',
+            'astropy': 'astropy',
+            'astropy_iers_data': 'astropy_iers_data',
+            'biopython': 'biopython',
+            'gensim': 'gensim',
+            'lightgbm': 'lightgbm',
+            'xgboost': 'xgboost',
+            'wordcloud': 'wordcloud',
+            'yt': 'yt',
+            'zarr': 'zarr',
+            'igraph': 'igraph',
+            'duckdb': 'duckdb',
+            'numcodecs': 'numcodecs',
+            'pywavelets': 'pywavelets',
+            'pyerfa': 'pyerfa',
+            'pyshp': 'pyshp',
+            'Cartopy': 'Cartopy',
+            'cmyt': 'cmyt',
+            'colorspacious': 'colorspacious',
+            'coolprop': 'coolprop',
+            'cffi': 'cffi',
+            'pycparser': 'pycparser',
+            'bcrypt': 'bcrypt',
+            'pynacl': 'pynacl',
+            'pycryptodome': 'pycryptodome',
+            'bitarray': 'bitarray',
+            'bitstring': 'bitstring',
+            'brotli': 'brotli',
+            'cachetools': 'cachetools',
+            'clarabel': 'clarabel',
+            'cvxpy-base': 'cvxpy-base',
+            'cysignals': 'cysignals',
+            'cytoolz': 'cytoolz',
+            'distlib': 'distlib',
+            'fastparquet': 'fastparquet',
+            'freesasa': 'freesasa',
+            'future': 'future',
+            'galpy': 'galpy',
+            'gmpy2': 'gmpy2',
+            'logbook': 'logbook',
+            'matplotlib-pyodide': 'matplotlib-pyodide',
+            'memory-allocator': 'memory-allocator',
+            'micropip': 'micropip',
+            'mmh3': 'mmh3',
+            'mne': 'mne',
+            'mpmath': 'mpmath',
+            'munch': 'munch',
+            'mypy': 'mypy',
+            'nlopt': 'nlopt',
+            'nh3': 'nh3',
+            'optlang': 'optlang',
+            'peewee': 'peewee',
+            'pillow_heif': 'pillow_heif',
+            'pkgconfig': 'pkgconfig',
+            'pplpy': 'pplpy',
+            'primecountpy': 'primecountpy',
+            'py': 'py',
+            'pyclipper': 'pyclipper',
+            'pygame-ce': 'pygame-ce',
+            'pyheif': 'pyheif',
+            'pyiceberg': 'pyiceberg',
+            'pyinstrument': 'pyinstrument',
+            'pyodide-http': 'pyodide-http',
+            'pysam': 'pysam',
+            'pytest-asyncio': 'pytest-asyncio',
+            'pytest-benchmark': 'pytest-benchmark',
+            'python-flint': 'python-flint',
+            'python-magic': 'python-magic',
+            'python-sat': 'python-sat',
+            'python_solvespace': 'python_solvespace',
+            'pyxirr': 'pyxirr',
+            'rebound': 'rebound',
+            'reboundx': 'reboundx',
+            'retrying': 'retrying',
+            'river': 'river',
+            'RobotRaconteur': 'RobotRaconteur',
+            'ruamel.yaml': 'ruamel.yaml',
+            'screed': 'screed',
+            'sisl': 'sisl',
+            'smart_open': 'smart_open',
+            'sourmash': 'sourmash',
+            'sparseqr': 'sparseqr',
+            'strictyaml': 'strictyaml',
+            'svgwrite': 'svgwrite',
+            'swiglpk': 'swiglpk',
+            'tblib': 'tblib',
+            'termcolor': 'termcolor',
+            'texttable': 'texttable',
+            'tiktoken': 'tiktoken',
+            'traits': 'traits',
+            'yarl': 'yarl',
+            'multidict': 'multidict',
+            'frozenlist': 'frozenlist',
+            'aiosignal': 'aiosignal',
+            'async-timeout': 'async-timeout',
+            'b2d': 'b2d',
+            'boost-histogram': 'boost-histogram',
+            'cbor-diag': 'cbor-diag',
+            'cffi_example': 'cffi_example',
+            'cligj': 'cligj',
+            'cramjam': 'cramjam',
+            'crc32c': 'crc32c',
+            'ewah_bool_utils': 'ewah_bool_utils',
+            'lakers-python': 'lakers-python',
+            'lazy-object-proxy': 'lazy-object-proxy',
+            'libcst': 'libcst',
+            'msgspec': 'msgspec',
+            'pyxel': 'pyxel',
+            'rust-panic-test': 'rust-panic-test',
+            'zengl': 'zengl',
+            'autograd': 'autograd',
+            'awkward-cpp': 'awkward-cpp',
+            'asciitree': 'asciitree'
+        };
+
+        const templates = {
+            python: `# Write your code here
+        # Example: import numpy as np
+        print("Hello from Stromy Engine!")`,
+            html: `<!DOCTYPE html>
+        <html>
+        <head>
+        <style>
+          body { background: #0a0a0f; color: #00ffcc; font-family: monospace; padding: 30px; text-align: center; }
+          .box { border: 2px dashed #00ffcc; padding: 20px; border-radius: 8px; display: inline-block; box-shadow: 0 0 15px rgba(0,255,204,0.2); }
+        </style>
+        </head>
+        <body>
+          <div class="box">
+            <h2>Stromy Quantum Render</h2>
+            <p>Hit 'Run' to unlock Live Auto-Update Mode!</p>
+          </div>
+        </body>
+        </html>`
+        };
+
+        let currentMode = 'python';
+        let hasRunHtmlOnce = false;
+        let findBar = null,
+            findInput = null,
+            findCount = null;
+        let findMatches = [],
+            findIndex = -1;
+
+        // ==================== DOM REFS ====================
+        const progressBarContainer = document.getElementById('libProgressBarContainer');
+        const progressFill = document.getElementById('libProgressFill');
+        const progressLabel = document.getElementById('progressLabel');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('status-text');
+        const statusMode = document.getElementById('status-mode');
+        const btnRun = document.getElementById('btnRun');
+        const btnRunSecondary = document.getElementById('btnRunSecondary');
+        const btnSave = document.getElementById('btnSave');
+        const btnHeavy = document.getElementById('btnHeavy');
+        const btnLoadPersistent = document.getElementById('btnLoadPersistent');
+        const libsSelect = document.getElementById('libsSelect');
+        const persistentLibInput = document.getElementById('persistentLibInput');
+        const customPackageInput = document.getElementById('customPackageInput');
+        const btnLoadCustom = document.getElementById('btnLoadCustom');
+        const codeInput = document.getElementById('teratex-editor');
+        const gfxContent = document.getElementById('graphics-content');
+        const canvasLayer = document.getElementById('graphics-canvas-layer');
+        const btnAnimPlay = document.getElementById('btnAnimPlay');
+        const animSpeedSlider = document.getElementById('animSpeedSlider');
+        const animFpsLabel = document.getElementById('animFpsLabel');
+
+        // ==================== PROGRESS UI ====================
+        function showProgress(msg, pct, indeterminate = false) {
+            if (progressBarContainer) progressBarContainer.classList.add('visible');
+            if (progressFill) {
+                progressFill.style.width = Math.min(100, Math.max(0, pct)) + '%';
+                if (indeterminate) progressFill.classList.add('indeterminate');
+                else progressFill.classList.remove('indeterminate');
+            }
+            if (progressLabel && msg !== undefined) progressLabel.textContent = msg;
+        }
+
+        function hideProgress(delay = 0) {
+            const doHide = () => {
+                if (progressBarContainer) progressBarContainer.classList.remove('visible');
+                if (progressFill) { progressFill.style.width = '0%';
+                    progressFill.classList.remove('indeterminate'); }
+                if (progressLabel) progressLabel.textContent = '';
+            };
+            if (delay > 0) setTimeout(doHide, delay);
+            else doHide();
+        }
+
+        function setLoadingUI(isLoading) {
+            loadingInProgress = isLoading;
+            const buttons = [btnRun, btnRunSecondary, btnSave, btnHeavy, btnLoadPersistent, btnLoadCustom];
+            buttons.forEach(b => { if (b) b.disabled = isLoading; });
+            if (libsSelect) libsSelect.disabled = isLoading;
+            if (persistentLibInput) persistentLibInput.disabled = isLoading;
+            if (statusDot) {
+                statusDot.classList.toggle('loading', isLoading);
+                if (!isLoading) statusDot.classList.remove('error-state');
+            }
+            if (statusText) statusText.textContent = isLoading ? 'Loading Packages...' : 'Core Active';
+        }
+
+        // ==================== LOGGING ====================
+        function pipeProgress(msg, pct, indeterminate) {
+            const term = document.getElementById('server-terminal');
+            let existing = document.getElementById('progress-line');
+            if (!existing) {
+                existing = document.createElement('div');
+                existing.id = 'progress-line';
+                existing.className = 'log-row';
+                term.appendChild(existing);
+            }
+            const time = new Date().toLocaleTimeString();
+            existing.innerHTML =
+                `<span class="log-time">[${time}]</span> <span class="log-progress">⏳ ${escapeHtml(msg)}</span>`;
+            term.scrollTop = term.scrollHeight;
+            showProgress(msg, pct, indeterminate);
+        }
+
+        function clearProgressLine() {
+            const existing = document.getElementById('progress-line');
+            if (existing) existing.remove();
+            hideProgress(300);
+        }
+
+        function pipeLog(msg, type = "normal") {
+            const term = document.getElementById('server-terminal');
+            const time = new Date().toLocaleTimeString();
+            let cls = "";
+            if (type === "sys") cls = "log-sys";
+            else if (type === "success") cls = "log-success";
+            else if (type === "warn") cls = "log-warn";
+            else if (type === "info") cls = "log-info";
+            else if (type === "error") cls = "log-error";
+            else if (type === "progress") cls = "log-progress";
+            const div = document.createElement('div');
+            div.className = 'log-row';
+            div.innerHTML = `<span class="log-time">[${time}]</span> <span class="${cls}">${escapeHtml(msg)}</span>`;
+            term.appendChild(div);
+            term.scrollTop = term.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function clearTerminal() {
+            document.getElementById('server-terminal').innerHTML = '';
+        }
+
+        // ==================== PYODIDE INIT ====================
+        async function initPyodide() {
+            if (pyodideReady) return pyodide;
+            if (pyodideLoading) {
+                pipeLog("Python runtime is already initializing, please wait...", "info");
+                let waited = 0;
+                while (pyodideLoading && waited < 30000) {
+                    await new Promise(r => setTimeout(r, 200));
+                    waited += 200;
+                    if (pyodideReady) return pyodide;
+                }
+                if (pyodideReady) return pyodide;
+                pipeLog("Timeout waiting for runtime initialization.", "warn");
+                return null;
+            }
+            pyodideLoading = true;
+            setLoadingUI(true);
+            pipeProgress("Starting Python runtime (Pyodide v0.26.0)...", 10, true);
+            pipeLog("Initializing Python runtime (Pyodide v0.26.0)...", "sys");
+            try {
+                pyodide = await loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.0/full/' });
+                pipeProgress("Loading core packages...", 30, true);
+                await pyodide.loadPackage('micropip');
+                await pyodide.runPython(py(`
+                    import os, warnings
+                    os.environ['MPLBACKEND'] = 'Agg'
+                    warnings.filterwarnings('ignore')
+                `));
+                await pyodide.runPython(py(`
+                    import builtins, js
+                    class _InputHandler:
+                        def __call__(self, prompt=""):
+                            ans = js.prompt(prompt)
+                            if ans is None:
+                                raise EOFError
+                            return ans
+                    builtins.input = _InputHandler()
+                `));
+                loadedPackages.add('micropip');
+                pipeLog("Python runtime ready. Core packages loaded.", "success");
+                pyodideReady = true;
+                if (statusMode) statusMode.innerText = "Python 3.12 (Ready)";
+                if (statusDot) { statusDot.classList.remove('loading', 'error-state'); }
+                if (statusText) statusText.textContent = 'Core Active';
+                clearProgressLine();
+                showProgress("Runtime ready", 100, false);
+                setTimeout(() => hideProgress(300), 1200);
+                return pyodide;
+            } catch (e) {
+                pipeLog("Pyodide init failed: " + e.message, "error");
+                pyodideReady = false;
+                if (statusMode) statusMode.innerText = "Python 3.12 (Error)";
+                if (statusDot) { statusDot.classList.add('error-state');
+                    statusDot.classList.remove('loading'); }
+                if (statusText) statusText.textContent = 'Init Failed';
+                clearProgressLine();
+                hideProgress(0);
+                return null;
+            } finally {
+                pyodideLoading = false;
+                setLoadingUI(false);
+            }
+        }
+
+        // ==================== PACKAGE LOADING ====================
+        async function loadPackages(pkgs) {
+            if (!pkgs || !pkgs.length) return;
+            if (loadingInProgress) {
+                pipeLog("Package loading already in progress, queuing...", "warn");
+                let waited = 0;
+                while (loadingInProgress && waited < 60000) {
+                    await new Promise(r => setTimeout(r, 300));
+                    waited += 300;
+                }
+                if (loadingInProgress) {
+                    pipeLog("Previous load still active, proceeding anyway.", "warn");
+                }
+            }
+            setLoadingUI(true);
+            loadQueueSerial++;
+            const mySerial = loadQueueSerial;
+
+            try {
+                const totalNeeded = pkgs.length;
+                pipeLog(`📦 Preparing to load ${totalNeeded} package(s)...`, "progress");
+                pipeProgress(`Analyzing ${totalNeeded} packages...`, 8, true);
+
+                const pd = await initPyodide();
+                if (!pd) {
+                    pipeLog("Python runtime not available. Cannot load packages.", "error");
+                    return;
+                }
+                if (mySerial !== loadQueueSerial) return;
+
+                const builtinToLoad = [];
+                const pipToLoad = [];
+                const alreadyLoaded = [];
+
+                for (const pkg of pkgs) {
+                    const norm = normalizePkgName(String(pkg));
+                    if (loadedPackages.has(norm)) {
+                        alreadyLoaded.push(norm);
+                    } else if (failedPackages.has(norm)) {
+                        if (BUILTIN_SET.has(norm)) builtinToLoad.push(norm);
+                        else pipToLoad.push(norm);
+                        failedPackages.delete(norm);
+                    } else if (BUILTIN_SET.has(norm)) {
+                        builtinToLoad.push(norm);
+                    } else {
+                        pipToLoad.push(norm);
+                    }
+                }
+
+                const totalSteps = builtinToLoad.length + pipToLoad.length + (alreadyLoaded.length > 0 ? 1 : 0);
+                if (totalSteps === 0) {
+                    pipeLog("All requested packages already loaded.", "info");
+                    pipeProgress("All packages ready", 100, false);
+                    setTimeout(() => { clearProgressLine(); }, 1000);
+                    return;
+                }
+
+                let completedSteps = 0;
+                const pctStart = 10,
+                    pctEnd = 95;
+
+                function calcPct() { return pctStart + Math.round((completedSteps / totalSteps) * (pctEnd -
+                        pctStart)); }
+
+                if (alreadyLoaded.length > 0) {
+                    completedSteps++;
+                    pipeLog(`Already loaded: ${alreadyLoaded.join(', ')}`, "info");
+                    pipeProgress(`Skipping ${alreadyLoaded.length} loaded...`, calcPct(), true);
+                }
+
+                if (builtinToLoad.length > 0 && mySerial === loadQueueSerial) {
+                    pipeLog(`Loading ${builtinToLoad.length} built-in packages (bulk)...`, "progress");
+                    pipeProgress(`Built-in bulk...`, calcPct(), true);
+                    try {
+                        await pd.loadPackage(builtinToLoad);
+                        builtinToLoad.forEach(p => loadedPackages.add(p));
+                        completedSteps += builtinToLoad.length;
+                        pipeLog(`Built-in ready: ${builtinToLoad.length} loaded.`, "success");
+                    } catch (e) {
+                        pipeLog(`Bulk built-in failed: ${e.message}. Retrying individually...`, "warn");
+                        for (let i = 0; i < builtinToLoad.length; i++) {
+                            if (mySerial !== loadQueueSerial) return;
+                            const p = builtinToLoad[i];
+                            pipeProgress(`Built-in [${i+1}/${builtinToLoad.length}] ${p}`, calcPct(), true);
+                            try {
+                                await pd.loadPackage(p);
+                                loadedPackages.add(p);
+                            } catch (e2) {
+                                failedPackages.add(p);
+                                pipeLog(`Failed: ${p} — ${e2.message}`, "warn");
+                            }
+                            completedSteps++;
+                        }
+                    }
+                }
+
+                if (pipToLoad.length > 0 && mySerial === loadQueueSerial) {
+                    pipeLog(`Installing ${pipToLoad.length} packages via micropip (bulk)...`, "progress");
+                    pipeProgress(`Pip bulk...`, calcPct(), true);
+                    try {
+                        await pd.runPythonAsync(py(`
+                            import micropip
+                            await micropip.install(${JSON.stringify(pipToLoad)})
+                        `));
+                        pipToLoad.forEach(p => loadedPackages.add(p));
+                        completedSteps += pipToLoad.length;
+                        pipeLog(`Pip installs: ${pipToLoad.length} loaded.`, "success");
+                    } catch (e) {
+                        pipeLog(`Bulk pip failed: ${e.message}. Retrying individually...`, "warn");
+                        for (let i = 0; i < pipToLoad.length; i++) {
+                            if (mySerial !== loadQueueSerial) return;
+                            const p = pipToLoad[i];
+                            pipeProgress(`pip: ${p} [${i+1}/${pipToLoad.length}]`, calcPct(), true);
+                            try {
+                                await pd.runPythonAsync(
+                                    `import micropip; await micropip.install(${JSON.stringify([p])})`);
+                                loadedPackages.add(p);
+                            } catch (e2) {
+                                failedPackages.add(p);
+                                pipeLog(`Micropip failed: ${p} — ${e2.message}`, "warn");
+                            }
+                            completedSteps++;
+                        }
+                    }
+                }
+
+                if (mySerial === loadQueueSerial) {
+                    const totalOk = pkgs.filter(p => loadedPackages.has(normalizePkgName(String(p)))).length;
+                    const totalFail = pkgs.filter(p => failedPackages.has(normalizePkgName(String(p)))).length;
+                    pipeProgress(`Done: ${totalOk} loaded, ${totalFail} failed`, 100, false);
+                    pipeLog(`📦 Package loading complete: ${totalOk} success, ${totalFail} failed.`, totalFail > 0 ?
+                        "warn" : "success");
+                    if (totalFail > 0) pipeLog("💡 Tip: Use the 📦 Heavy button to load custom packages that failed.",
+                        "info");
+                    setTimeout(() => { clearProgressLine(); }, 1500);
+                }
+            } catch (e) {
+                pipeLog("Package loading error: " + e.message, "error");
+                console.error(e);
+            } finally {
+                if (mySerial === loadQueueSerial) {
+                    setLoadingUI(false);
+                }
+            }
+        }
+
+        function normalizePkgName(name) {
+            return String(name).trim().toLowerCase().replace(/[-_]/g, '-');
+        }
+
+        // ==================== IMPORT DETECTION ====================
+        function detectImports(code) {
+            const imported = new Set();
+            const clean = code.replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '');
+            const regex = /(?:from\s+(\S+)\s+import|import\s+(\S+)(?:\s+as\s+\S+)?)/g;
+            let match;
+            while ((match = regex.exec(clean)) !== null) {
+                const rawMod = (match[1] || match[2]).split('.')[0];
+                const mod = rawMod.toLowerCase().replace(/_/g, '-');
+                if (IMPORT_MAP[rawMod]) imported.add(IMPORT_MAP[rawMod]);
+                else if (IMPORT_MAP[mod]) imported.add(IMPORT_MAP[mod]);
+                else {
+                    for (const lib of ALL_LIBS) {
+                        if (lib.toLowerCase().replace(/[-_]/g, '-') === mod) { imported.add(lib); break; }
+                    }
+                }
+            }
+            const multiImport = /import\s+((?:[a-zA-Z_][a-zA-Z0-9_]*(?:\s*,\s*)?)+)/g;
+            while ((match = multiImport.exec(clean)) !== null) {
+                const mods = match[1].split(',').map(s => s.trim().split('.')[0]);
+                for (const rawMod of mods) {
+                    const mod = rawMod.toLowerCase().replace(/_/g, '-');
+                    if (IMPORT_MAP[rawMod]) imported.add(IMPORT_MAP[rawMod]);
+                    else if (IMPORT_MAP[mod]) imported.add(IMPORT_MAP[mod]);
+                    else {
+                        for (const lib of ALL_LIBS) {
+                            if (lib.toLowerCase().replace(/[-_]/g, '-') === mod) { imported.add(lib); break; }
+                        }
+                    }
+                }
+            }
+            return Array.from(imported);
+        }
+
+        // ==================== EXECUTION ====================
+        async function executeRuntimeEngine() {
+            if (loadingInProgress) {
+                pipeLog("Please wait — execution or loading is in progress.", "warn");
+                return;
+            }
+            // Stop any running animations
+            stopAllAnimations();
+
+            const code = codeInput.value;
+            fileContents[currentMode] = code;
+
+            if (currentMode === 'html') {
+                hasRunHtmlOnce = true;
+                switchOutputTab('render');
+                if (statusMode) statusMode.innerText = "HTML5 (Live Sync)";
+                document.getElementById('html-render-frame').srcdoc = code;
+                return;
+            }
+            if (currentMode !== 'python') return;
+
+            switchOutputTab('logs');
+            if (statusMode) statusMode.innerText = "Python 3.12 (Running)";
+            document.getElementById('html-render-frame').srcdoc = 'about:blank';
+
+            setLoadingUI(true);
+
+            try {
+                const pd = await initPyodide();
+                if (!pd) {
+                    pipeLog("Python runtime not available.", "error");
+                    return;
+                }
+
+                // Clean up previous matplotlib state
+                try {
+                    await pd.runPythonAsync(py(`
+                        import matplotlib.pyplot as plt
+                        plt.close('all')
+                    `));
+                } catch (e) { /* ignore */ }
+
+                const needed = detectImports(code);
+                const toLoad = needed.filter(p => !loadedPackages.has(p) && !failedPackages.has(p));
+                if (toLoad.length > 0) {
+                    const msg =
+                        `Detected ${toLoad.length} required package(s):\n${toLoad.slice(0,10).join(', ')}${toLoad.length > 10 ? '...' : ''}\nDo you want to load them now?`;
+                    const loadNow = confirm(msg);
+                    if (loadNow) {
+                        pipeLog(`User agreed to load ${toLoad.length} packages.`, "info");
+                        await loadPackages(toLoad);
+                    } else {
+                        pipeLog(`Skipped loading ${toLoad.length} detected packages.`, "warn");
+                    }
+                    setLoadingUI(true);
+                }
+
+                // Reset stdout/stderr capture
+                let out = '',
+                    err = '';
+                pd.setStdout({ batched: t => out += t });
+                pd.setStderr({ batched: t => err += t });
+
+                let finalOutput = '';
+                let executionSuccess = false;
+                try {
+                    await pd.runPythonAsync(code);
+                    finalOutput = (out + err).trim();
+                    executionSuccess = true;
+                } catch (e) {
+                    finalOutput = (out + err).trim();
+                    if (e.message.includes('ModuleNotFoundError')) {
+                        const mm = e.message.match(/No module named '(\S+)'/);
+                        if (mm) {
+                            const mp = IMPORT_MAP[mm[1].split('.')[0].toLowerCase()] || mm[1];
+                            pipeLog(`Missing module detected: ${mp}`, "warn");
+                            setLoadingUI(true);
+                            await loadPackages([mp]);
+                            setLoadingUI(true);
+                            out = '';
+                            err = '';
+                            pd.setStdout({ batched: t => out += t });
+                            pd.setStderr({ batched: t => err += t });
+                            try {
+                                await pd.runPythonAsync(code);
+                                finalOutput = (out + err).trim();
+                                executionSuccess = true;
+                            } catch (e2) {
+                                finalOutput = (out + err).trim();
+                                pipeLog("Error: " + e2.message, "error");
+                            }
+                        } else {
+                            pipeLog("Error: " + e.message, "error");
+                        }
+                    } else {
+                        pipeLog("Error: " + e.message, "error");
+                    }
+                }
+
+                if (finalOutput) finalOutput.split('\n').forEach(l => pipeLog(l, "normal"));
+                else if (executionSuccess) pipeLog("Script executed successfully.", "success");
+
+                // Capture graphics AFTER execution
+                const graphicsCaptured = await captureGraphics(pd);
+                if (graphicsCaptured) {
+                    switchOutputTab('graphics');
+                }
+
+                // Set up the stromy animation module for future runs
+                await setupStromyAnimationModule(pd);
+
+            } catch (jsError) {
+                pipeLog("JavaScript Error: " + jsError.message, "error");
+                console.error(jsError);
+            } finally {
+                if (statusMode) statusMode.innerText = "Python 3.12 (Ready)";
+                setLoadingUI(false);
+            }
+        }
+
+        // ==================== STROMY ANIMATION MODULE ====================
+        async function setupStromyAnimationModule(pd) {
+            try {
+                await pd.runPythonAsync(py(`
+                    import sys, types
+                    if 'stromy' not in sys.modules:
+                        stromy = types.ModuleType('stromy')
+                        sys.modules['stromy'] = stromy
+                    else:
+                        stromy = sys.modules['stromy']
+
+                    class AnimationRecorder:
+                        """Helper to record frames and export as GIF/WebM for the engine."""
+                        def __init__(self, fps=10, name="anim"):
+                            self.frames = []
+                            self.fps = fps
+                            self.name = name
+                            self._fig = None
+                        def record_frame(self, fig=None):
+                            import matplotlib.pyplot as plt, io, base64
+                            if fig is None:
+                                fig = plt.gcf()
+                            self._fig = fig
+                            buf = io.BytesIO()
+                            fig.savefig(buf, format='png', dpi=100, bbox_inches='tight')
+                            buf.seek(0)
+                            self.frames.append(base64.b64encode(buf.read()).decode('utf-8'))
+                        def to_gif_b64(self):
+                            import io, base64
+                            from PIL import Image
+                            if not self.frames:
+                                return None
+                            images = []
+                            for fb64 in self.frames:
+                                img = Image.open(io.BytesIO(base64.b64decode(fb64)))
+                                images.append(img.convert('RGBA'))
+                            buf = io.BytesIO()
+                            images[0].save(buf, format='GIF', save_all=True,
+                                           append_images=images[1:], duration=int(1000/self.fps),
+                                           loop=0, disposal=2, optimize=False)
+                            buf.seek(0)
+                            return base64.b64encode(buf.read()).decode('utf-8')
+                        def clear(self):
+                            self.frames.clear()
+
+                    stromy.AnimationRecorder = AnimationRecorder
+                    stromy._recorders = []
+                    def get_recorder(name="anim", fps=10):
+                        rec = AnimationRecorder(fps=fps, name=name)
+                        stromy._recorders.append(rec)
+                        return rec
+                    stromy.get_recorder = get_recorder
+                    stromy._recorded_gifs = []
+                `));
+            } catch (e) {
+                console.warn("Stromy animation module setup failed:", e);
+            }
+        }
+
+        // ==================== ENHANCED GRAPHICS CAPTURE ====================
+        async function captureGraphics(pd) {
+            let capturedCount = 0;
+            gfxContent.innerHTML = '';
+            capturedGifDataUrls = [];
+            stopAllAnimations();
+
+            try {
+                // 1) Capture matplotlib animations (FuncAnimation, ArtistAnimation)
+                let anims = await pd.runPythonAsync(py(`
+                    import matplotlib.animation as animation, matplotlib.pyplot as plt, io, base64, sys
+                    gifs = []
+                    count = 0
+                    # Check for explicit animation objects in globals
+                    for name, obj in list(globals().items()):
+                        if isinstance(obj, (animation.FuncAnimation, animation.ArtistAnimation)):
+                            if count >= 25:
+                                break
+                            try:
+                                writer = animation.PillowWriter(fps=12)
+                                buf = io.BytesIO()
+                                obj.save(buf, writer=writer, dpi=120)
+                                buf.seek(0)
+                                gifs.append(base64.b64encode(buf.read()).decode('utf-8'))
+                                if hasattr(obj, '_fig'):
+                                    try:
+                                        plt.close(obj._fig)
+                                    except:
+                                        pass
+                                count += 1
+                            except Exception as e:
+                                print(f"Animation capture error for {name}: {e}", file=sys.stderr)
+                    gifs
+                `));
+                if (anims && anims.toJs) anims = anims.toJs();
+                if (Array.isArray(anims) && anims.length > 0) {
+                    anims.forEach((b64, idx) => {
+                        const dataUrl = 'data:image/gif;base64,' + b64;
+                        capturedGifDataUrls.push({ dataUrl, name: `anim_${idx}`, fps: 12 });
+                        const card = createGfxCard(dataUrl, `Animation ${idx+1}`, true, 12);
+                        gfxContent.appendChild(card);
+                    });
+                    pipeLog(`Captured ${anims.length} animation(s) as GIF.`, "success");
+                    capturedCount += anims.length;
+                }
+
+                // 2) Capture stromy AnimationRecorder GIFs
+                let stromyGifs = await pd.runPythonAsync(py(`
+                    import sys, base64
+                    gifs = []
+                    if 'stromy' in sys.modules:
+                        stromy = sys.modules['stromy']
+                        for rec in getattr(stromy, '_recorders', []):
+                            try:
+                                b64 = rec.to_gif_b64()
+                                if b64:
+                                    gifs.append((b64, rec.name, rec.fps))
+                            except Exception as e:
+                                print(f"Stromy recorder error: {e}", file=sys.stderr)
+                        stromy._recorders.clear()
+                    gifs
+                `));
+                if (stromyGifs && stromyGifs.toJs) stromyGifs = stromyGifs.toJs();
+                if (Array.isArray(stromyGifs) && stromyGifs.length > 0) {
+                    stromyGifs.forEach(([b64, name, fps]) => {
+                        const dataUrl = 'data:image/gif;base64,' + b64;
+                        capturedGifDataUrls.push({ dataUrl, name: name || 'stromy_anim', fps: fps || 10 });
+                        const card = createGfxCard(dataUrl, name || 'Stromy Anim', true, fps || 10);
+                        gfxContent.appendChild(card);
+                    });
+                    pipeLog(`Captured ${stromyGifs.length} Stromy animation(s).`, "success");
+                    capturedCount += stromyGifs.length;
+                }
+
+                // 3) Static matplotlib figures
+                let figs = await pd.runPythonAsync(py(`
+                    import matplotlib.pyplot as plt, io, base64
+                    imgs = []
+                    count = 0
+                    for n in plt.get_fignums():
+                        if count >= 20:
+                            break
+                        fig = plt.figure(n)
+                        buf = io.BytesIO()
+                        fig.savefig(buf, format='png', dpi=120, bbox_inches='tight')
+                        buf.seek(0)
+                        imgs.append(base64.b64encode(buf.read()).decode('utf-8'))
+                        plt.close(fig)
+                        count += 1
+                    imgs
+                `));
+                if (figs && figs.toJs) figs = figs.toJs();
+                if (Array.isArray(figs) && figs.length > 0) {
+                    figs.forEach((b64, idx) => {
+                        const dataUrl = 'data:image/png;base64,' + b64;
+                        const card = createGfxCard(dataUrl, `Figure ${idx+1}`, false, 0);
+                        gfxContent.appendChild(card);
+                    });
+                    pipeLog(`Captured ${figs.length} static figure(s).`, "info");
+                    capturedCount += figs.length;
+                }
+
+                // 4) PIL Images
+                let pilImages = await pd.runPythonAsync(py(`
+                    from PIL import Image
+                    import io, base64, sys
+                    imgs = []
+                    count = 0
+                    for name, obj in list(globals().items()):
+                        if isinstance(obj, Image.Image):
+                            if count >= 20:
+                                break
+                            try:
+                                buf = io.BytesIO()
+                                obj.save(buf, format='PNG')
+                                buf.seek(0)
+                                imgs.append(base64.b64encode(buf.read()).decode('utf-8'))
+                                count += 1
+                            except Exception as e:
+                                print(f"PIL capture error for {name}: {e}", file=sys.stderr)
+                    imgs
+                `));
+                if (pilImages && pilImages.toJs) pilImages = pilImages.toJs();
+                if (Array.isArray(pilImages) && pilImages.length > 0) {
+                    pilImages.forEach((b64, idx) => {
+                        const dataUrl = 'data:image/png;base64,' + b64;
+                        const card = createGfxCard(dataUrl, `PIL Image ${idx+1}`, false, 0);
+                        gfxContent.appendChild(card);
+                    });
+                    pipeLog(`Captured ${pilImages.length} PIL image(s).`, "info");
+                    capturedCount += pilImages.length;
+                }
+
+                if (capturedCount === 0) {
+                    gfxContent.innerHTML = '<div class="gfx-placeholder">No graphics captured yet.</div>';
+                }
+                updateGraphicsTabLabel();
+                updateAnimPlayButton();
+                return capturedCount > 0;
+            } catch (e) {
+                console.warn("Graphics capture error:", e);
+                pipeLog("Graphics capture failed: " + e.message, "error");
+                gfxContent.innerHTML = '<div class="gfx-placeholder">No graphics captured yet.</div>';
+                updateGraphicsTabLabel();
+                return false;
+            }
+        }
+
+        function createGfxCard(dataUrl, label, isAnim, fps) {
+            const card = document.createElement('div');
+            card.className = 'gfx-card' + (isAnim ? '' : '');
+            if (isAnim) card.dataset.animFps = fps || 10;
+            card.dataset.animDataUrl = dataUrl;
+            card.dataset.isAnim = isAnim ? '1' : '0';
+
+            const img = document.createElement('img');
+            img.src = dataUrl;
+            img.alt = label;
+            img.title = isAnim ? `${label} (click to play/pause)` : label;
+            img.loading = 'lazy';
+            img.style.cursor = isAnim ? 'pointer' : 'zoom-in';
+
+            if (isAnim) {
+                img.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleSingleAnimation(card, img);
+                });
+            } else {
+                img.addEventListener('click', () => {
+                    // Open full-size in new tab for static images
+                    const win = window.open('', '_blank');
+                    if (win) {
+                        win.document.write(
+                            `<img src="${dataUrl}" style="max-width:100%;height:auto;background:#000;">`);
+                        win.document.title = label;
+                    }
+                });
+            }
+
+            const overlay = document.createElement('div');
+            overlay.className = 'anim-overlay';
+            overlay.textContent = isAnim ? `⏯ ${label} (${fps || 10} fps)` : label;
+
+            card.appendChild(img);
+            card.appendChild(overlay);
+            return card;
+        }
+
+        // ==================== ANIMATION PLAYBACK ENGINE ====================
+        function stopAllAnimations() {
+            animIntervals.forEach(iv => clearInterval(iv));
+            animIntervals = [];
+            globalAnimPlaying = false;
+            updateAnimPlayButton();
+            // Remove playing class from all cards
+            gfxContent.querySelectorAll('.gfx-card.anim-playing').forEach(c => c.classList.remove('anim-playing'));
+        }
+
+        function toggleGlobalAnimation() {
+            const animCards = gfxContent.querySelectorAll('.gfx-card[data-is-anim="1"]');
+            if (animCards.length === 0) {
+                pipeLog("No animations to play.", "warn");
+                return;
+            }
+
+            if (globalAnimPlaying) {
+                stopAllAnimations();
+                pipeLog("All animations paused.", "info");
+                return;
+            }
+
+            globalAnimPlaying = true;
+            updateAnimPlayButton();
+            pipeLog(`Playing ${animCards.length} animation(s) at ${globalAnimFps} fps.`, "info");
+
+            animCards.forEach(card => {
+                startCardAnimation(card);
+            });
+        }
+
+        function startCardAnimation(card) {
+            const img = card.querySelector('img');
+            if (!img) return;
+            const dataUrl = card.dataset.animDataUrl;
+            const fps = parseInt(card.dataset.animFps) || globalAnimFps;
+            card.classList.add('anim-playing');
+
+            // For GIFs, the browser handles animation natively
+            // We reload the GIF to restart it
+            const originalSrc = img.src;
+            img.src = '';
+            requestAnimationFrame(() => {
+                img.src = originalSrc;
+            });
+
+            // Set up a refresh cycle to keep GIFs in sync
+            const interval = setInterval(() => {
+                if (!globalAnimPlaying || !card.classList.contains('anim-playing')) {
+                    clearInterval(interval);
+                    const idx = animIntervals.indexOf(interval);
+                    if (idx >= 0) animIntervals.splice(idx, 1);
+                    return;
+                }
+                // Keep GIF alive by briefly toggling
+                if (img.complete && img.naturalWidth > 0) {
+                    // GIF is playing natively, no action needed
+                }
+            }, 30000); // Refresh check every 30s
+            animIntervals.push(interval);
+        }
+
+        function toggleSingleAnimation(card, img) {
+            if (card.classList.contains('anim-playing')) {
+                card.classList.remove('anim-playing');
+                // Stop any associated interval
+                animIntervals.forEach(iv => clearInterval(iv));
+                animIntervals = [];
+                if (!gfxContent.querySelector('.gfx-card.anim-playing')) {
+                    globalAnimPlaying = false;
+                    updateAnimPlayButton();
+                }
+            } else {
+                card.classList.add('anim-playing');
+                startCardAnimation(card);
+                if (!globalAnimPlaying) {
+                    globalAnimPlaying = true;
+                    updateAnimPlayButton();
+                }
+            }
+        }
+
+        function updateAnimSpeed() {
+            globalAnimFps = parseInt(animSpeedSlider.value) || 10;
+            if (animFpsLabel) animFpsLabel.textContent = globalAnimFps + ' fps';
+            // Update all anim cards' data-fps
+            gfxContent.querySelectorAll('.gfx-card[data-is-anim="1"]').forEach(card => {
+                if (!card.dataset.originalFps) card.dataset.originalFps = card.dataset.animFps;
+                card.dataset.animFps = globalAnimFps;
+            });
+            // Restart playing animations with new speed
+            if (globalAnimPlaying) {
+                stopAllAnimations();
+                globalAnimPlaying = true;
+                updateAnimPlayButton();
+                gfxContent.querySelectorAll('.gfx-card[data-is-anim="1"]').forEach(card => {
+                    startCardAnimation(card);
+                });
+            }
+        }
+
+        function updateAnimPlayButton() {
+            if (btnAnimPlay) {
+                btnAnimPlay.textContent = globalAnimPlaying ? '⏸ Pause All' : '⏯ Play All';
+                btnAnimPlay.classList.toggle('anim-active', globalAnimPlaying);
+            }
+        }
+
+        function toggleCanvasLayer() {
+            canvasLayerActive = !canvasLayerActive;
+            const cl = document.getElementById('graphics-canvas-layer');
+            if (cl) cl.classList.toggle('active', canvasLayerActive);
+            const btn = document.getElementById('btnCanvasToggle');
+            if (btn) btn.classList.toggle('anim-active', canvasLayerActive);
+            if (canvasLayerActive) {
+                pipeLog("Canvas overlay enabled. Use stromy.canvas in Python to render.", "info");
+                initCanvasLayer();
+            } else {
+                pipeLog("Canvas overlay disabled.", "info");
+            }
+        }
+
+        function initCanvasLayer() {
+            const cl = document.getElementById('graphics-canvas-layer');
+            if (!cl || cl.querySelector('canvas')) return;
+            const canvas = document.createElement('canvas');
+            canvas.width = cl.clientWidth || 400;
+            canvas.height = cl.clientHeight || 300;
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            cl.appendChild(canvas);
+            // Expose canvas to Python via stromy module (handled in setup)
+        }
+
+        function clearGraphics() {
+            stopAllAnimations();
+            gfxContent.innerHTML = '<div class="gfx-placeholder">No graphics captured yet.</div>';
+            capturedGifDataUrls = [];
+            updateGraphicsTabLabel();
+            updateAnimPlayButton();
+            pipeLog("Graphics cleared.", "info");
+        }
+
+        function updateGraphicsTabLabel() {
+            const count = gfxContent.querySelectorAll('img').length;
+            const tab = document.getElementById('tab-graphics');
+            tab.textContent = count > 0 ? `GRAPHICS (${count})` : 'GRAPHICS';
+        }
+
+        // ==================== UI HELPERS ====================
+        window.handleLibSelect = function() {
+            const val = libsSelect.value;
+            if (!val || loadingInProgress) {
+                if (loadingInProgress) pipeLog("Please wait for current loading to finish.", "warn");
+                libsSelect.value = '';
+                return;
+            }
+            let pkgs = [];
+            if (val === 'common') pkgs = [...BUILTIN_COMMON];
+            else if (val === 'moderate') pkgs = [...BUILTIN_MODERATE];
+            else if (val === 'advanced') pkgs = [...BUILTIN_ADVANCED];
+            else if (val === 'science') pkgs = ['numpy', 'pandas', 'matplotlib', 'scipy', 'sympy', 'scikit-learn',
+                'scikit-image', 'Pillow', 'opencv-python', 'imageio', 'pywavelets', 'bokeh', 'astropy', 'biopython'
+            ];
+            else if (val === 'web') pkgs = ['requests', 'beautifulsoup4', 'lxml', 'html5lib', 'urllib3', 'Jinja2',
+                'MarkupSafe', 'Pygments'
+            ];
+            else if (val === 'data') pkgs = ['pandas', 'numpy', 'matplotlib', 'scipy', 'scikit-learn', 'statsmodels',
+                'patsy', 'xarray', 'geopandas', 'fiona', 'pyproj', 'shapely'
+            ];
+            else if (val === 'all') pkgs = [...BUILTIN_COMMON, ...BUILTIN_MODERATE, ...BUILTIN_ADVANCED];
+            libsSelect.value = '';
+            if (pkgs.length > 0) {
+                pipeLog(`Loading preset: ${val} (${pkgs.length} packages)`, "info");
+                loadPackages(pkgs);
+            }
+        };
+
+        function loadPersistentLibs() {
+            if (loadingInProgress) { pipeLog("Please wait for current loading to finish.", "warn"); return; }
+            const raw = persistentLibInput.value.trim();
+            if (!raw) return;
+            const pkgs = raw.split(',').map(s => s.trim()).filter(Boolean);
+            if (pkgs.length > 0) loadPackages(pkgs);
+        }
+
+        async function loadCustomPackage() {
+            if (loadingInProgress) { pipeLog("Please wait for current loading to finish.", "warn"); return; }
+            const raw = customPackageInput.value.trim();
+            if (!raw) return;
+            const pkgs = raw.split(',').map(s => s.trim()).filter(Boolean);
+            document.getElementById('customPackageModal').classList.remove('active');
+            if (pkgs.length > 0) await loadPackages(pkgs);
+        }
+
+        function openCustomPackageModal() {
+            if (loadingInProgress) { pipeLog("Please wait for current loading to finish.", "warn"); return; }
+            document.getElementById('customPackageModal').classList.add('active');
+            customPackageInput.focus();
+        }
+
+        window.onload = function() {
+            try {
+                const savedPy = localStorage.getItem('stromy_python');
+                const savedHtml = localStorage.getItem('stromy_html');
+                if (savedPy) fileContents.python = savedPy;
+                if (savedHtml) fileContents.html = savedHtml;
+            } catch (e) {}
+
+            codeInput.value = fileContents.python || templates.python;
+            undoStacks.python = [{ text: codeInput.value, start: 0, end: 0 }];
+            undoStacks.html = [{ text: fileContents.html || templates.html, start: 0, end: 0 }];
+
+            pipeLog("System Initialized. Pyodide v0.26.0 ready. Animation engine online.", "sys");
+            updateRenderPlaceholder();
+
+            const actionBtn = document.getElementById('actionMenuBtn');
+            const dropdown = document.getElementById('actionDropdown');
+            const toolbar = document.querySelector('.vertical-toolbar');
+
+            actionBtn.onclick = function(e) {
+                e.stopPropagation();
+                const rect = actionBtn.getBoundingClientRect();
+                dropdown.style.position = 'fixed';
+                dropdown.style.left = (rect.right + 4) + 'px';
+                dropdown.style.top = Math.min(rect.top, window.innerHeight - 400) + 'px';
+                dropdown.style.display = (dropdown.style.display === 'block') ? 'none' : 'block';
+            };
+
+            document.addEventListener('click', function(e) {
+                if (!actionBtn.contains(e.target) && !dropdown.contains(e.target)) dropdown.style.display =
+                    'none';
+            });
+            window.addEventListener('resize', () => { dropdown.style.display = 'none'; });
+            toolbar.addEventListener('scroll', () => { dropdown.style.display = 'none'; });
+
+            dropdown.querySelectorAll('a').forEach(item => {
+                item.addEventListener('click', () => { dropdown.style.display = 'none'; });
+            });
+
+            document.getElementById('customPackageModal').addEventListener('click', function(e) {
+                if (e.target === this) this.classList.remove('active');
+            });
+
+            document.getElementById('btnLoadCustom').addEventListener('click', loadCustomPackage);
+
+            // Initialize animation speed slider
+            if (animSpeedSlider) {
+                animSpeedSlider.addEventListener('input', updateAnimSpeed);
+                updateAnimSpeed();
+            }
+        };
+
+        function updateRenderPlaceholder() {
+            document.getElementById('python-render-placeholder').style.display = currentMode !== 'html' ? 'flex' :
+                'none';
+            document.getElementById('html-render-frame').style.display = currentMode === 'html' ? 'block' : 'none';
+        }
+
+        codeInput.addEventListener('input', function() {
+            const now = Date.now();
+            if (now - lastInputTime > 100) {
+                saveState();
+                lastInputTime = now;
+            }
+
+            if (currentMode === 'html') {
+                clearTimeout(htmlRenderTimeout);
+                htmlRenderTimeout = setTimeout(() => {
+                    if (document.getElementById('tab-render').classList.contains('active')) {
+                        document.getElementById('html-render-frame').srcdoc = codeInput.value;
+                    }
+                }, 600);
+            }
+
+            if (document.getElementById('engine-switch').value === 'prism') {
+                runLayerTransition();
+            }
+        });
+
+        codeInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = this.selectionStart,
+                    end = this.selectionEnd;
+                const value = this.value;
+
+                if (start !== end) {
+                    const selectedText = value.substring(start, end);
+                    const lines = selectedText.split('\n');
+                    let newText;
+                    if (e.shiftKey) {
+                        newText = lines.map(line => line.startsWith('    ') ? line.slice(4) : line.replace(
+                            /^\t/, '')).join('\n');
+                    } else {
+                        newText = lines.map(line => '    ' + line).join('\n');
+                    }
+                    this.value = value.substring(0, start) + newText + value.substring(end);
+                    this.selectionStart = start;
+                    this.selectionEnd = start + newText.length;
+                } else {
+                    if (e.shiftKey) {
+                        const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+                        if (start - lineStart >= 4 && value.substring(lineStart, start).startsWith('    ')) {
+                            this.value = value.substring(0, lineStart) + value.substring(lineStart + 4);
+                            this.selectionStart = this.selectionEnd = start - 4;
+                        } else if (start > lineStart && value.charAt(lineStart) === '\t') {
+                            this.value = value.substring(0, lineStart) + value.substring(lineStart + 1);
+                            this.selectionStart = this.selectionEnd = start - 1;
+                        }
+                    } else {
+                        this.value = value.substring(0, start) + '    ' + value.substring(end);
+                        this.selectionStart = this.selectionEnd = start + 4;
+                    }
+                }
+                saveState();
+            }
+        });
+
+        function switchFileMode(mode) {
+            fileContents[currentMode] = codeInput.value;
+            stopAllAnimations();
+
+            currentMode = mode;
+            hasRunHtmlOnce = false;
+            document.getElementById('file-py').classList.toggle('active', mode === 'python');
+            document.getElementById('file-html').classList.toggle('active', mode === 'html');
+            document.getElementById('active-tab-name').innerText = mode === 'python' ? "script_engine.py" :
+                "index_render.html";
+            if (statusMode) statusMode.innerText = mode === 'python' ? "Python 3.12 (Ready)" : "HTML5 (Standby)";
+
+            codeInput.value = fileContents[mode] || templates[mode];
+
+            if (!undoStacks[mode]) undoStacks[mode] = [{ text: codeInput.value, start: 0, end: 0 }];
+            if (!redoStacks[mode]) redoStacks[mode] = [];
+
+            switchOutputTab(mode === 'html' ? 'render' : 'logs');
+            updateRenderPlaceholder();
+            if (mode === 'html') document.getElementById('html-render-frame').srcdoc = '';
+
+            if (document.getElementById('engine-switch').value === 'prism') {
+                runLayerTransition();
+            }
+        }
+
+        function runLayerTransition() {
+            const layer = document.getElementById('engine-switch').value;
+            const teratex = document.getElementById('teratex-editor');
+            const prism = document.getElementById('prism-viewer');
+            if (layer === 'teratex') {
+                teratex.style.opacity = '1';
+                teratex.style.pointerEvents = 'auto';
+                teratex.style.zIndex = '2';
+                prism.style.opacity = '0';
+                prism.style.pointerEvents = 'none';
+                prism.style.zIndex = '1';
+            } else {
+                teratex.style.opacity = '0';
+                teratex.style.pointerEvents = 'none';
+                teratex.style.zIndex = '1';
+                prism.style.opacity = '1';
+                prism.style.pointerEvents = 'none';
+                prism.style.zIndex = '2';
+                const code = teratex.value;
+                const lang = currentMode === 'python' ? 'python' : 'html';
+                const highlighted = Prism.highlight(code, Prism.languages[lang] || Prism.languages.plain, lang);
+                document.getElementById('prism-token-pipe').innerHTML = highlighted;
+            }
+        }
+
+        function exportCodeToFile() {
+            const defaultName = currentMode === 'python' ? 'script_engine.py' : 'index_render.html';
+            const blob = new Blob([codeInput.value], { type: 'text/plain' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = defaultName;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            pipeLog(`File saved as ${defaultName}`, "success");
+        }
+
+        function switchOutputTab(target) {
+            document.getElementById('tab-log').classList.toggle('active', target === 'logs');
+            document.getElementById('tab-render').classList.toggle('active', target === 'render');
+            document.getElementById('tab-graphics').classList.toggle('active', target === 'graphics');
+            document.getElementById('log-viewport').classList.toggle('active', target === 'logs');
+            document.getElementById('render-viewport').classList.toggle('active', target === 'render');
+            document.getElementById('graphics-viewport').classList.toggle('active', target === 'graphics');
+
+            // Pause animations when switching away from graphics tab
+            if (target !== 'graphics' && globalAnimPlaying) {
+                stopAllAnimations();
+                pipeLog("Animations paused (tab switch).", "info");
+            }
+        }
+
+        function showToast(msg, type) { pipeLog(msg, type || 'info'); }
+
+        function openFileDialog() {
+            const inp = document.createElement('input');
+            inp.type = 'file';
+            inp.accept = '.html,.py,.txt,.js,.css';
+            inp.onchange = e => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const content = reader.result;
+                    const name = file.name.toLowerCase();
+                    if (name.endsWith('.py')) {
+                        fileContents.python = content;
+                        switchFileMode('python');
+                    } else {
+                        fileContents.html = content;
+                        switchFileMode('html');
+                    }
+                };
+                reader.readAsText(file);
+            };
+            inp.click();
+        }
+
+        function newFile() {
+            if (confirm('Discard current content?')) {
+                fileContents[currentMode] = '';
+                codeInput.value = '';
+                saveState();
+                pipeLog("New file created.", "info");
+            }
+        }
+
+        function clearEditor() {
+            if (confirm('Clear editor?')) {
+                fileContents[currentMode] = '';
+                codeInput.value = '';
+                saveState();
+                pipeLog("Editor cleared.", "info");
+            }
+        }
+
+        function selectAllText() { codeInput.select(); }
+
+        function copyText() {
+            const text = codeInput.value.substring(codeInput.selectionStart, codeInput.selectionEnd) || codeInput.value;
+            navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success'));
+        }
+        async function pasteText() {
+            try {
+                const text = await navigator.clipboard.readText();
+                const start = codeInput.selectionStart;
+                codeInput.value = codeInput.value.substring(0, start) + text + codeInput.value.substring(codeInput
+                    .selectionEnd);
+                codeInput.selectionStart = codeInput.selectionEnd = start + text.length;
+                saveState();
+                showToast('Pasted', 'success');
+            } catch { showToast('Paste failed', 'error'); }
+        }
+
+        function undoAction() {
+            const stack = undoStacks[currentMode];
+            const redo = redoStacks[currentMode];
+            if (stack.length <= 1) return showToast('Nothing to undo', 'warn');
+            redo.push(stack.pop());
+            const s = stack[stack.length - 1];
+            codeInput.value = s.text;
+            codeInput.selectionStart = s.start;
+            codeInput.selectionEnd = s.end;
+            codeInput.focus();
+        }
+
+        function redoAction() {
+            const stack = undoStacks[currentMode];
+            const redo = redoStacks[currentMode];
+            if (!redo.length) return showToast('Nothing to redo', 'warn');
+            const s = redo.pop();
+            stack.push(s);
+            codeInput.value = s.text;
+            codeInput.selectionStart = s.start;
+            codeInput.selectionEnd = s.end;
+            codeInput.focus();
+        }
+
+        function toggleFind() {
+            if (!findBar) createFindBar();
+            findBar.classList.toggle('active');
+            if (findBar.classList.contains('active')) { findInput.focus();
+                doFind(); }
+        }
+
+        function createFindBar() {
+            if (findBar) return;
+            const bar = document.createElement('div');
+            bar.className = 'find-bar';
+            bar.id = 'findBar';
+            bar.innerHTML = `
+                <input type="text" id="findInput" placeholder="Find...">
+                <label style="color:#aaa;font-size:11px;display:flex;align-items:center;gap:4px;cursor:pointer;">
+                    <input type="checkbox" id="findCaseSensitive" style="cursor:pointer;"> Aa
+                </label>
+                <span class="find-count" id="findCount"></span>
+                <button class="find-btn" id="findPrev">↑</button>
+                <button class="find-btn" id="findNext">↓</button>
+                <button class="find-btn" id="findClose">✕</button>
+            `;
+            document.querySelector('.editor-container').appendChild(bar);
+            bar.querySelector('#findClose').onclick = toggleFind;
+            bar.querySelector('#findInput').oninput = () => doFind();
+            bar.querySelector('#findCaseSensitive').onchange = () => doFind();
+            bar.querySelector('#findNext').onclick = () => doFind('next');
+            bar.querySelector('#findPrev').onclick = () => doFind('prev');
+            bar.querySelector('#findInput').addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') { e.preventDefault();
+                    toggleFind(); }
+                if (e.key === 'Enter') { e.preventDefault();
+                    doFind(e.shiftKey ? 'prev' : 'next'); }
+            });
+            findBar = bar;
+            findInput = bar.querySelector('#findInput');
+            findCount = bar.querySelector('#findCount');
+        }
+
+        function doFind(dir) {
+            if (!findInput) return;
+            const q = findInput.value;
+            if (!q) { findCount.textContent = ''; return; }
+            const text = codeInput.value;
+            const caseSensitive = document.getElementById('findCaseSensitive')?.checked || false;
+
+            findMatches = [];
+            let idx = 0;
+            const searchText = caseSensitive ? text : text.toLowerCase();
+            const searchQ = caseSensitive ? q : q.toLowerCase();
+
+            while ((idx = searchText.indexOf(searchQ, idx)) !== -1) {
+                findMatches.push(idx);
+                idx += searchQ.length;
+            }
+
+            if (!findMatches.length) { findCount.textContent = '0/0'; return; }
+
+            if (dir === 'next') {
+                findIndex++;
+                if (findIndex >= findMatches.length) findIndex = 0;
+            } else if (dir === 'prev') {
+                findIndex--;
+                if (findIndex < 0) findIndex = findMatches.length - 1;
+            } else {
+                findIndex = findMatches.findIndex(i => i >= codeInput.selectionStart);
+                if (findIndex === -1) findIndex = 0;
+            }
+
+            const matchPos = findMatches[findIndex];
+            codeInput.selectionStart = matchPos;
+            codeInput.selectionEnd = matchPos + q.length;
+            codeInput.focus();
+
+            const textBefore = codeInput.value.substring(0, matchPos);
+            const linesBefore = textBefore.split('\n').length - 1;
+            const lineHeight = 21;
+            codeInput.scrollTop = Math.max(0, linesBefore * lineHeight - codeInput.clientHeight / 2);
+
+            findCount.textContent = `${findIndex+1}/${findMatches.length}`;
+        }
+
+        function saveState() {
+            clearTimeout(saveStateTimeout);
+            saveStateTimeout = setTimeout(() => {
+                const cur = codeInput.value,
+                    s = codeInput.selectionStart,
+                    e = codeInput.selectionEnd;
+                const stack = undoStacks[currentMode];
+                if (stack.length && stack[stack.length - 1].text === cur) return;
+                stack.push({ text: cur, start: s, end: e });
+                if (stack.length > 200) stack.shift();
+                redoStacks[currentMode] = [];
+
+                try {
+                    localStorage.setItem('stromy_' + currentMode, cur);
+                } catch (e) {}
+            }, 300);
+        }
+
+        document.addEventListener('keydown', function(e) {
+            const ctrl = e.ctrlKey || e.metaKey;
+            if (!ctrl) {
+                if (e.key === 'Escape') {
+                    if (findBar && findBar.classList.contains('active')) {
+                        toggleFind();
+                        e.preventDefault();
+                    }
+                    const modal = document.getElementById('customPackageModal');
+                    if (modal.classList.contains('active')) {
+                        modal.classList.remove('active');
+                        e.preventDefault();
+                    }
+                    // Also stop animations on Escape
+                    if (globalAnimPlaying) {
+                        stopAllAnimations();
+                        pipeLog("Animations stopped (Escape).", "info");
+                    }
+                }
+                return;
+            }
+            const key = e.key.toLowerCase();
+            if (key === 's') { e.preventDefault();
+                exportCodeToFile(); } else if (key === 'o') { e.preventDefault();
+                openFileDialog(); } else if (key === 'f') { e.preventDefault();
+                toggleFind(); } else if (key === 'z') { e.preventDefault();
+                undoAction(); } else if (key === 'y') { e.preventDefault();
+                redoAction(); } else if (key === 'enter') { e.preventDefault();
+                executeRuntimeEngine(); }
+        });
+
+        // ==================== COPY & EXIT FUNCTIONS ====================
+        function copyFullScript() {
+            const text = codeInput.value;
+            if (!text.trim()) {
+                pipeLog("Nothing to copy.", "warn");
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                pipeLog("Full script copied to clipboard.", "success");
+            }).catch(() => {
+                pipeLog("Clipboard access failed.", "error");
+            });
+        }
+
+        function exitApp() {
+            stopAllAnimations();
+            if (confirm('Exit Stromy Engine? Unsaved changes may be lost.')) {
+                document.body.innerHTML =
+                    '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#1e1e1e;color:#888;font-family:monospace;">Session ended.</div>';
+                try { window.close(); } catch (e) {}
+            }
+        }
+
+        // Expose key functions globally
+        window.executeRuntimeEngine = executeRuntimeEngine;
+        window.exportCodeToFile = exportCodeToFile;
+        window.switchFileMode = switchFileMode;
+        window.switchOutputTab = switchOutputTab;
+        window.runLayerTransition = runLayerTransition;
+        window.clearTerminal = clearTerminal;
+        window.clearGraphics = clearGraphics;
+        window.toggleGlobalAnimation = toggleGlobalAnimation;
+        window.updateAnimSpeed = updateAnimSpeed;
+        window.toggleCanvasLayer = toggleCanvasLayer;
+        window.openFileDialog = openFileDialog;
+        window.newFile = newFile;
+        window.clearEditor = clearEditor;
+        window.selectAllText = selectAllText;
+        window.copyText = copyText;
+        window.pasteText = pasteText;
+        window.undoAction = undoAction;
+        window.redoAction = redoAction;
+        window.toggleFind = toggleFind;
+        window.copyFullScript = copyFullScript;
+        window.exitApp = exitApp;
+        window.openCustomPackageModal = openCustomPackageModal;
+        window.loadPersistentLibs = loadPersistentLibs;
+        window.handleLibSelect = window.handleLibSelect;
+    </script>
+</body>
+</html>
